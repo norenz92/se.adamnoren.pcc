@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- The '/homey.js' script must be included in your settings view to work -->
+    <script
+      type="text/javascript"
+      src="/homey.js"
+      data-origin="settings"
+    ></script>
+    <script
+      type="text/javascript"
+      src="script.js"
+    ></script>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <h1 data-i18n="settings.title">
+      <!-- This will be filled with the translated string with key 'settings.title'. -->
+    </h1>
+    <p data-i18n="settings.subtitle">
+      <!-- This field will also be translated -->
+    </p>
+    <div id="data" style="overflow-x:auto;"></div>
+    <button id="refresh" class="left" style="margin-top: 10px;">Refresh</button>
+
+    <script type="text/javascript">
+      // a method named 'onHomeyReady' must be present in your code
+      function onHomeyReady(Homey) {
+        // Tell Homey we're ready to be displayed
+        Homey.ready();
+        refresh();
+        
+      }
+
+      var saveElement = document.getElementById("refresh");
+
+      saveElement.addEventListener("click", function (e) {
+        refresh();
+      });
+
+      function refresh() {
+        document.getElementById('data').innerHTML = '<p>Loading..</p>'
+        Homey.get("data", function (err, deviceData) {
+          if (err) return Homey.alert(err);
+          //Homey.alert(Object.keys(deviceData).length)
+          tableCreate(deviceData);
+        });
+      }
+
+      
+    </script>
+  </body>
+</html>
