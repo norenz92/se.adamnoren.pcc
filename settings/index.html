@@ -42,8 +42,13 @@
         document.getElementById('data').innerHTML = '<p>Loading..</p>'
         Homey.get("data", function (err, deviceData) {
           if (err) return Homey.alert(err);
+          if (typeof(deviceData) === 'object') {
+            tableCreate(deviceData);
+          } else {
+            document.getElementById('data').innerHTML = '<p>Gathering data. Please come back later.</p>'
+          }
           //Homey.alert(Object.keys(deviceData).length)
-          tableCreate(deviceData);
+          
         });
       }
 
