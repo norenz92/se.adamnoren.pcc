@@ -11,7 +11,7 @@ class MyApp extends Homey.App {
   async onInit() {
     this.log('MyApp has been initialized');
     this.homey.api = await HomeyAPI.forCurrentHomey(this.homey);
-    this.runCheck();
+    await this.runCheck();
     this.everyHour();
   }
 
@@ -31,13 +31,21 @@ class MyApp extends Homey.App {
 		this.log('everyHour job started');
 	}
 
+  async getDeviceData() {
+    return await this.homey.settings.get('data')
+  }
+
   async runCheck() {
     try {
       // Get all devices
       const devices = await this.homey.api.devices.getDevices();;
 
-
       let measurableDevices = await this.homey.settings.get('data')
+
+      if (measurableDevices === null) measurableDevices = {}
+
+      console.log(measurableDevices)
+
 
       // Loop over all devices
       for (const device of Object.values(devices)) {
@@ -59,7 +67,8 @@ class MyApp extends Homey.App {
             currentMeter: device.capabilitiesObj.meter_power.value
           }
 
-          let kwhSinceLastHour = ((measurableDevices[device.id]) && (measurableDevices[device.id].data[prevDate])) ? deviceData.currentMeter-measurableDevices[device.id].data[prevDate].meter : 0
+          
+          let kwhSinceLastHour = ((measurableDevices[device.id]) && (measurableDevices[device.id].data[prevDate] !== null)) ? deviceData.currentMeter-measurableDevices[device.id].data[prevDate].meter : 0
 
           if (measurableDevices[device.id]) {
             measurableDevices[device.id].data = {

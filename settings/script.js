@@ -133,6 +133,51 @@ function tableCreate(deviceData) {
   // Adding the entire table to the body tag
   document.getElementById('data').innerHTML = ''
   document.getElementById('data').appendChild(table);
+
+  const labels = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December'
+  ];
+
+  let data_2 = {
+    labels: labels,
+    datasets: []
+  }
+
+  Object.keys(deviceData).forEach(key => {
+    let date = new Date(key).toLocaleDateString();
+  })
+
+  const data = {
+    labels: labels,
+    datasets: [{
+      label: 'My First dataset',
+      backgroundColor: 'rgb(255, 99, 132)',
+      borderColor: 'rgb(255, 99, 132)',
+      data: [0, 10, 5, 2, 20, 30, 45],
+    }]
+  };
+
+  const config = {
+    type: 'line',
+    data: data,
+    options: {}
+  };
+
+  const myChart = new Chart(
+    document.getElementById('myChart'),
+    config
+  );
 }
 
 function lifetimeData(deviceData) {

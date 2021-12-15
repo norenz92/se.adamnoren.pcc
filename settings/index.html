@@ -2,11 +2,13 @@
 <html>
   <head>
     <!-- The '/homey.js' script must be included in your settings view to work -->
+    <script src="https://unpkg.com/vue"></script>
     <script
       type="text/javascript"
       src="/homey.js"
       data-origin="settings"
     ></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script
       type="text/javascript"
       src="script.js"
@@ -21,14 +23,67 @@
       <!-- This field will also be translated -->
     </p>
     <div id="data" style="overflow-x:auto;"></div>
+    <div id="app">
+      {{ message }}
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Device</th>
+              <th>Prev. hour</th>
+              <th>Today</th>
+              <th>This week</th>
+              <th>This month</th>
+              <th>This year</th>
+              <th>Lifetime</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(value, propertyName) in deviceData">
+              <td>{{ test(value.data) }}</td>
+              <td>{{value.deviceInfo.name}}</td>
+              <td>{{value.deviceInfo.name}}</td>
+              <td>{{value.deviceInfo.name}}</td>
+              <td>{{value.deviceInfo.name}}</td>
+              <td>{{value.deviceInfo.name}}</td>
+              <td>{{value.deviceInfo.name}}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div>
+      <canvas id="myChart"></canvas>
+    </div>
     <button id="refresh" class="left" style="margin-top: 10px;">Refresh</button>
 
     <script type="text/javascript">
       // a method named 'onHomeyReady' must be present in your code
+
+      var app = new Vue({
+        el: '#app',
+        data: {
+          message: 'Hello Vue!',
+          deviceData: {}
+        },
+        computed: {
+          test: function(value) {
+            return (hourData(value.data).cost).toFixed(2)
+          }
+        }
+      })
+
       function onHomeyReady(Homey) {
         // Tell Homey we're ready to be displayed
         Homey.ready();
         refresh();
+
+        Homey.api('GET', '/deviceData', null, (err, result) => {
+          if (err) return Homey.alert('deviceData' + err);
+          app.deviceData = result;
+        });
+
+        
         
       }
 
@@ -48,6 +103,8 @@
             document.getElementById('data').innerHTML = '<p>Gathering data. Please come back later.</p>'
           }
           //Homey.alert(Object.keys(deviceData).length)
+
+          
           
         });
       }

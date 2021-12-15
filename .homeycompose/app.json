@@ -27,5 +27,11 @@
   "author": {
     "name": "Adam Norén",
     "email": "info@adamnoren.se"
+  },
+  "api": {
+    "getDeviceData": {
+      "method": "GET",
+      "path": "/deviceData"
+    }
   }
 }
