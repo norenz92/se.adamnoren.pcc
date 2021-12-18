@@ -3,13 +3,13 @@
 const Homey = require('homey');
 const { HomeyAPI } = require('athom-api');
 
-class MyApp extends Homey.App {
+class PCC extends Homey.App {
 
   /**
    * onInit is called when the app is initialized.
    */
   async onInit() {
-    this.log('MyApp has been initialized');
+    this.log('PCC has been initialized');
     this.homey.api = await HomeyAPI.forCurrentHomey(this.homey);
     await this.runCheck();
     this.everyHour();
@@ -35,17 +35,32 @@ class MyApp extends Homey.App {
     return await this.homey.settings.get('data')
   }
 
+  tibberInstalled(devices) {
+    let installed = false;
+    for (const device of Object.values(devices)) {
+      if (device.driverUri.includes('tibber')) {
+        installed = true;
+      } 
+    }
+    return installed;
+  }
+
   async runCheck() {
     try {
       // Get all devices
-      const devices = await this.homey.api.devices.getDevices();;
+      const devices = await this.homey.api.devices.getDevices();
 
+      if (!this.tibberInstalled(devices)) {
+        this.homey.notifications.createNotification({excerpt: 'PCC: Could not find any Tibber "Home" device. Please add it and restart PCC app.'})
+        console.log('PCC: Could not find any Tibber "Home" device. Please add it and restart PCC app.')
+        this.homey.settings.set('error', 'Could not find any Tibber "Home" device. Please add it and restart PCC app')
+        return;
+      }
+      this.homey.settings.set('error', false)
+      console.log('Tibber device found. Continuing.')
       let measurableDevices = await this.homey.settings.get('data')
 
       if (measurableDevices === null) measurableDevices = {}
-
-      console.log(measurableDevices)
-
 
       // Loop over all devices
       for (const device of Object.values(devices)) {
@@ -67,8 +82,15 @@ class MyApp extends Homey.App {
             currentMeter: device.capabilitiesObj.meter_power.value
           }
 
+          let kwhSinceLastHour = 0;
           
-          let kwhSinceLastHour = ((measurableDevices[device.id]) && (measurableDevices[device.id].data[prevDate] !== null)) ? deviceData.currentMeter-measurableDevices[device.id].data[prevDate].meter : 0
+          try {
+            kwhSinceLastHour = deviceData.currentMeter-measurableDevices[device.id].data[prevDate].meter
+          } catch (err) {
+            kwhSinceLastHour = 0;
+          }
+
+          //let kwhSinceLastHour = measurableDevices[device.id].data[prevDate].meter !== undefined ? deviceData.currentMeter-measurableDevices[device.id].data[prevDate].meter : 0
 
           if (measurableDevices[device.id]) {
             measurableDevices[device.id].data = {
@@ -104,20 +126,21 @@ class MyApp extends Homey.App {
           lastUpdated: null,
           price: null
         }
+
         for (const device of Object.values(devices)) {
           //console.log(device)
 
           if (device.driverUri.includes('tibber')) {
-            data.price = device.capabilitiesObj.price_total.value;
-            data.lastUpdated = device.capabilitiesObj.price_total.lastUpdated;
+            data.price = device.capabilitiesObj.measure_price_total.value;
+            data.lastUpdated = device.capabilitiesObj.measure_price_total.lastUpdated;
           } 
         }
         return data;
       }
     } catch (err) {
-      this.log(err)
+      console.log(err)
     }
   }
 }
 
-module.exports = MyApp;
+module.exports = PCC;

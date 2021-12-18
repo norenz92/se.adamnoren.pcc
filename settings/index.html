@@ -9,11 +9,7 @@
       data-origin="settings"
     ></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script
-      type="text/javascript"
-      src="script.js"
-    ></script>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <h1 data-i18n="settings.title">
@@ -22,10 +18,11 @@
     <p data-i18n="settings.subtitle">
       <!-- This field will also be translated -->
     </p>
-    <div id="data" style="overflow-x:auto;"></div>
     <div id="app">
-      {{ message }}
-      <div style="overflow-x:auto;">
+      <p v-if="(message.length > 0) && (!error)">{{ message }}</p>
+      <p v-if="(message.length > 0) && (error)">ERROR! {{ message }}</p>
+      <p v-if="loading">Loading..</p>
+      <div v-if="(!error) && (!loading)" style="overflow-x: auto">
         <table>
           <thead>
             <tr>
@@ -40,76 +37,332 @@
           </thead>
           <tbody>
             <tr v-for="(value, propertyName) in deviceData">
-              <td>{{ test(value.data) }}</td>
               <td>{{value.deviceInfo.name}}</td>
-              <td>{{value.deviceInfo.name}}</td>
-              <td>{{value.deviceInfo.name}}</td>
-              <td>{{value.deviceInfo.name}}</td>
-              <td>{{value.deviceInfo.name}}</td>
-              <td>{{value.deviceInfo.name}}</td>
+              <td>
+                {{ hourData(value.data).cost }}:- ({{
+                hourData(value.data).kwh}}) kWh
+              </td>
+              <td>
+                {{ todayData(value.data).cost }}:- ({{
+                todayData(value.data).kwh}}) kWh
+              </td>
+              <td>
+                {{ weekData(value.data).cost }}:- ({{
+                weekData(value.data).kwh}}) kWh
+              </td>
+              <td>
+                {{ monthData(value.data).cost }}:- ({{
+                monthData(value.data).kwh}}) kWh
+              </td>
+              <td>
+                {{ yearData(value.data).cost }}:- ({{
+                yearData(value.data).kwh}}) kWh
+              </td>
+              <td>
+                {{ lifetimeData(value.data).cost }}:- ({{
+                lifetimeData(value.data).kwh}}) kWh
+              </td>
             </tr>
           </tbody>
         </table>
       </div>
+      <div v-if="(!error) && (!loading)" style="height: 350px">
+        <canvas id="myChart"></canvas>
+      </div>
     </div>
-    <div>
-      <canvas id="myChart"></canvas>
-    </div>
-    <button id="refresh" class="left" style="margin-top: 10px;">Refresh</button>
+    <!-- <button id="refresh" class="left" style="margin-top: 10px">Refresh</button> -->
 
     <script type="text/javascript">
       // a method named 'onHomeyReady' must be present in your code
 
       var app = new Vue({
-        el: '#app',
+        el: "#app",
         data: {
-          message: 'Hello Vue!',
-          deviceData: {}
+          error: false,
+          message: "",
+          loading: true,
+          deviceData: {},
         },
-        computed: {
-          test: function(value) {
-            return (hourData(value.data).cost).toFixed(2)
-          }
-        }
-      })
+        methods: {
+          hourData: function (deviceData) {
+            let currentYear = new Date().getFullYear();
+            let currentMonth = new Date().getMonth();
+            let currentDate = new Date().getDate();
+            let currentHour = new Date().getHours();
+
+            var results = Object.keys(deviceData).reduce(function (acc, val) {
+              if (
+                new Date(val).getFullYear() === currentYear &&
+                new Date(val).getMonth() === currentMonth &&
+                new Date(val).getDate() === currentDate &&
+                new Date(val).getHours() === currentHour - 1
+              )
+                acc[val] = deviceData[val];
+              return acc;
+            }, {});
+
+            return {
+              cost: Number(
+                Object.keys(results).reduce(function (previous, key) {
+                  return Number(previous + results[key].cost);
+                }, 0)
+              ).toFixed(2),
+              kwh: Number(
+                Object.keys(results).reduce(function (previous, key) {
+                  return Number(previous + results[key].kwh);
+                }, 0)
+              ).toFixed(2),
+            };
+          },
+          todayData: function (deviceData) {
+            let currentYear = new Date().getFullYear();
+            let currentMonth = new Date().getMonth();
+            let currentDate = new Date().getDate();
+
+            var results = Object.keys(deviceData).reduce(function (acc, val) {
+              if (
+                new Date(val).getFullYear() === currentYear &&
+                new Date(val).getMonth() === currentMonth &&
+                new Date(val).getDate() === currentDate
+              )
+                acc[val] = deviceData[val];
+              return acc;
+            }, {});
+
+            return {
+              cost: Number(
+                Object.keys(results).reduce(function (previous, key) {
+                  return Number(previous + results[key].cost);
+                }, 0)
+              ).toFixed(2),
+              kwh: Number(
+                Object.keys(results).reduce(function (previous, key) {
+                  return Number(previous + results[key].kwh);
+                }, 0)
+              ).toFixed(2),
+            };
+          },
+          weekData: function (deviceData) {
+            currentdate1 = new Date();
+            var oneJan1 = new Date(currentdate1.getFullYear(), 0, 1);
+            var numberOfDays1 = Math.floor(
+              (currentdate1 - oneJan1) / (24 * 60 * 60 * 1000)
+            );
+            var result1 = Math.ceil(
+              (currentdate1.getDay() + 1 + numberOfDays1) / 7
+            );
+
+            var results = Object.keys(deviceData).reduce(function (acc, val) {
+              currentdate2 = new Date(val);
+              var oneJan2 = new Date(currentdate2.getFullYear(), 0, 1);
+              var numberOfDays2 = Math.floor(
+                (currentdate2 - oneJan2) / (24 * 60 * 60 * 1000)
+              );
+              var result2 = Math.ceil(
+                (currentdate2.getDay() + 1 + numberOfDays2) / 7
+              );
+              if (result1 === result2) acc[val] = deviceData[val];
+              return acc;
+            }, {});
+
+            return {
+              cost: Number(
+                Object.keys(results).reduce(function (previous, key) {
+                  return Number(previous + results[key].cost);
+                }, 0)
+              ).toFixed(2),
+              kwh: Number(
+                Object.keys(results).reduce(function (previous, key) {
+                  return Number(previous + results[key].kwh);
+                }, 0)
+              ).toFixed(2),
+            };
+          },
+          monthData: function (deviceData) {
+            let currentYear = new Date().getFullYear();
+            let currentMonth = new Date().getMonth();
+
+            var results = Object.keys(deviceData).reduce(function (acc, val) {
+              if (
+                new Date(val).getFullYear() === currentYear &&
+                new Date(val).getMonth() === currentMonth
+              )
+                acc[val] = deviceData[val];
+              return acc;
+            }, {});
+
+            return {
+              cost: Number(
+                Object.keys(results).reduce(function (previous, key) {
+                  return Number(previous + results[key].cost);
+                }, 0)
+              ).toFixed(2),
+              kwh: Number(
+                Object.keys(results).reduce(function (previous, key) {
+                  return Number(previous + results[key].kwh);
+                }, 0)
+              ).toFixed(2),
+            };
+          },
+          yearData: function (deviceData) {
+            let currentYear = new Date().getFullYear();
+
+            var results = Object.keys(deviceData).reduce(function (acc, val) {
+              if (new Date(val).getFullYear() === currentYear)
+                acc[val] = deviceData[val];
+              return acc;
+            }, {});
+
+            return {
+              cost: Number(
+                Object.keys(results).reduce(function (previous, key) {
+                  return Number(previous + results[key].cost);
+                }, 0)
+              ).toFixed(2),
+              kwh: Number(
+                Object.keys(results).reduce(function (previous, key) {
+                  return Number(previous + results[key].kwh);
+                }, 0)
+              ).toFixed(2),
+            };
+          },
+          lifetimeData: function (deviceData) {
+            var results = Object.keys(deviceData).reduce(function (acc, val) {
+              acc[val] = deviceData[val];
+              return acc;
+            }, {});
+
+            return {
+              cost: Number(
+                Object.keys(results).reduce(function (previous, key) {
+                  return Number(previous + results[key].cost);
+                }, 0)
+              ).toFixed(2),
+              kwh: Number(
+                Object.keys(results).reduce(function (previous, key) {
+                  return Number(previous + results[key].kwh);
+                }, 0)
+              ).toFixed(2),
+            };
+          },
+        },
+      });
+
+      function renderChart(deviceData) {
+        let results = Object.keys(deviceData).map((device) => {
+          let months = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+          let test = Object.keys(deviceData[device].data)
+            .filter(
+              (value, i) =>
+                new Date(value).getFullYear() === new Date().getFullYear()
+            )
+            .reduce(function (dataByMonth, datum) {
+              let month = new Date(datum).getMonth();
+              let value = deviceData[device].data[datum].cost;
+              dataByMonth[month] = (dataByMonth[month] || 0) + value;
+
+              return dataByMonth;
+            }, {});
+
+          Object.keys(test).forEach((key) => {
+            months[key] = (months[key] || 0) + test[key];
+          });
+
+          var color = selectColor(Object.keys(deviceData).map(e => e).indexOf(device), Object.keys(deviceData).length)
+
+          return {
+            label: deviceData[device].deviceInfo.name,
+            backgroundColor: color,
+            borderColor: color,
+            data: months,
+          };
+        });
+
+        const labels = [
+          "January",
+          "February",
+          "March",
+          "April",
+          "May",
+          "June",
+          "July",
+          "August",
+          "September",
+          "October",
+          "November",
+          "December",
+        ];
+
+        const data = {
+          labels: labels,
+          datasets: results,
+        };
+
+        const config = {
+          type: "bar",
+          data: data,
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: {
+                display: true,
+                title: {
+                  display: true,
+                  text: 'Month',
+                  color: '#000',
+                }
+              },
+              y: {
+                display: true,
+                title: {
+                  display: true,
+                  text: 'Cost',
+                  color: '#000',
+                }
+              }
+            }
+          },
+        };
+        const myChart = new Chart(document.getElementById("myChart"), config);
+      }
 
       function onHomeyReady(Homey) {
         // Tell Homey we're ready to be displayed
         Homey.ready();
-        refresh();
-
-        Homey.api('GET', '/deviceData', null, (err, result) => {
-          if (err) return Homey.alert('deviceData' + err);
-          app.deviceData = result;
-        });
-
-        
-        
+        checkTibber().then(() => refresh()).catch(err => {
+          app.error = true
+          app.message = err
+          app.loading = false
+        })
       }
 
-      var saveElement = document.getElementById("refresh");
-
-      saveElement.addEventListener("click", function (e) {
-        refresh();
-      });
+      async function checkTibber() {
+        return new Promise((resolve, reject) => {
+          Homey.get("error", function (err, error) {
+            if (err) return reject(err)
+            if (!error) resolve();
+            else reject(error)
+          });
+        })
+      }
 
       function refresh() {
-        document.getElementById('data').innerHTML = '<p>Loading..</p>'
-        Homey.get("data", function (err, deviceData) {
-          if (err) return Homey.alert(err);
-          if (typeof(deviceData) === 'object') {
-            tableCreate(deviceData);
-          } else {
-            document.getElementById('data').innerHTML = '<p>Gathering data. Please come back later.</p>'
-          }
-          //Homey.alert(Object.keys(deviceData).length)
-
-          
-          
+        Homey.api("GET", "/deviceData", null, (err, result) => {
+          if (err) return Homey.alert("deviceData" + err);
+          app.deviceData = result;
+          renderChart(result);
+          app.error = false;
+          app.message = '';
+          app.loading = false;
         });
       }
 
-      
+      function selectColor(colorNum, colors){
+        if (colors < 1) colors = 1; // defaults to one color - avoid divide by zero
+        return "hsl(" + (colorNum * (360 / colors) % 360) + ",100%,50%)";
+      }
     </script>
   </body>
 </html>
