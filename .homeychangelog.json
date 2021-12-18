@@ -4,5 +4,14 @@
   },
   "1.0.1": {
     "en": "Fixed bug when no data has been collected yet"
+  },
+  "1.0.2": {
+    "en": "Bug fixes"
+  },
+  "1.0.3": {
+    "en": "Bug fixes"
+  },
+  "1.0.4": {
+    "en": "Bug fixes"
   }
 }
