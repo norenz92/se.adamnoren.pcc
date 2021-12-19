@@ -38,7 +38,7 @@ class PCC extends Homey.App {
   tibberInstalled(devices) {
     let installed = false;
     for (const device of Object.values(devices)) {
-      if (device.driverUri.includes('tibber')) {
+      if ((device.driverUri.includes('tibber')) && (device.driverId === 'home')) {
         installed = true;
       } 
     }
@@ -128,9 +128,7 @@ class PCC extends Homey.App {
         }
 
         for (const device of Object.values(devices)) {
-          //console.log(device)
-
-          if (device.driverUri.includes('tibber')) {
+          if ((device.driverUri.includes('tibber')) && (device.driverId === 'home')) {
             data.price = device.capabilitiesObj.measure_price_total.value;
             data.lastUpdated = device.capabilitiesObj.measure_price_total.lastUpdated;
           } 
